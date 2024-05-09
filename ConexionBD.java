@@ -27,7 +27,7 @@ public class ConexionBD {
                 .codecRegistry(pojoCodedRegistry)
                 .build();
         mongoClient = MongoClients.create(settings);
-        database = mongoClient.getDatabase("airport1");
+        database = mongoClient.getDatabase("hola");
         
     }
     
