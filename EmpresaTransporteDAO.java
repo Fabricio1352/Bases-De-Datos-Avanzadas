@@ -7,41 +7,35 @@ package dao;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.regex;
-import com.mongodb.client.model.Updates;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.set;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import objetosNegocio.EmpresaProductora;
-import objetosNegocio.Residuo;
-import objetosNegocio.Translado;
-import org.bson.Document;
-import org.bson.conversions.Bson;
+import objetosNegocio.EmpresaTransporte;
+import objetosNegocio.Vehiculo;
 import org.bson.types.ObjectId;
 
 /**
  *
  * @author fabri
  */
-public class EmpresaProductoraDAO {
+public class EmpresaTransporteDAO {
 
     private MongoCollection getCollection() {
         ConexionBD conexion = new ConexionBD();
         MongoDatabase database = conexion.crearConexion();
-        MongoCollection collection = database.getCollection("productores", EmpresaProductora.class);
+        MongoCollection collection = database.getCollection("transportistas", EmpresaTransporte.class);
         return collection;
     }
 
-    public boolean agregar(EmpresaProductora ep) {
+    public boolean agregar(EmpresaTransporte ep) {
         try {
-            Document doc = empresaProductoraToDocument(ep);
-            this.getCollection().insertOne(doc);
+//            Document doc = empresaProductoraToDocument(ep);
+            this.getCollection().insertOne(ep);
             System.out.println("El objeto ha sido agregado exitosamente.");
             return true;
         } catch (Exception e) {
@@ -51,18 +45,10 @@ public class EmpresaProductoraDAO {
         }
     }
 
-    private Document empresaProductoraToDocument(EmpresaProductora ep) {
-        Document doc = new Document();
-        doc.append("idEmpresa", ep.getIdEmpresa());
-        doc.append("nomEmpresa", ep.getNomEmpresa());
-        // Aquí puedes agregar la lógica para convertir la lista de residuos a un formato adecuado
-        return doc;
-    }
-
-    public boolean editar(EmpresaProductora ep) {
+    public boolean editar(EmpresaTransporte ep) {
 
         try {
-            UpdateResult result = this.getCollection().updateOne(eq("idEmpresa", ep.getIdEmpresa()), combine(set("nomEmpresa", ep.getNomEmpresa()), set("residuos", ep.getResiduos())));
+            UpdateResult result = this.getCollection().updateOne(eq("idEmpresa", ep.getIdEmpresa()), combine(set("nomEmpresa", ep.getNomEmpresa()), set("vehiculos", ep.getVehiculos()), set("translado", ep.getTranslado())));
             System.out.println("Objeto editado correctamente");
             return true;
         } catch (Exception e) {
@@ -73,9 +59,9 @@ public class EmpresaProductoraDAO {
 
     }
 
-    public boolean eliminar(EmpresaProductora ep) {
+    public boolean eliminar(EmpresaTransporte ep) {
         try {
-            DeleteResult result = this.getCollection().deleteOne(eq("idEmpresa", ep.getIdEmpresa()));
+            DeleteResult result = this.getCollection().deleteOne(eq("idEmpresaTransporte", ep.getIdEmpresa()));
             return result.getDeletedCount() == 1;
         } catch (Exception e) {
             System.out.println("Error al eliminar");
@@ -83,9 +69,9 @@ public class EmpresaProductoraDAO {
         }
     }
 
-    public EmpresaProductora buscar(EmpresaProductora ep) {
+    public EmpresaTransporte buscar(EmpresaTransporte ep) {
         try {
-            EmpresaProductora result = (EmpresaProductora) this.getCollection().find(eq("idEmpresa", ep.getIdEmpresa())).first();
+            EmpresaTransporte result = (EmpresaTransporte) this.getCollection().find(eq("idEmpresaTransporte", ep.getIdEmpresa())).first();
             return result;
 
         } catch (Exception e) {
@@ -95,9 +81,9 @@ public class EmpresaProductoraDAO {
         }
     }
 
-    public EmpresaProductora buscarPorId(ObjectId id) {
+    public EmpresaTransporte buscarPorId(ObjectId id) {
         try {
-            EmpresaProductora epa = (EmpresaProductora) this.getCollection().find(eq("idEmpresa", id)).first();
+            EmpresaTransporte epa = (EmpresaTransporte) this.getCollection().find(eq("idEmpresaTransporte", id)).first();
             return epa;
         } catch (Exception e) {
             System.out.println("Error al buscar la empresa por ID:");
@@ -106,31 +92,12 @@ public class EmpresaProductoraDAO {
         }
     }
 
-    public List<EmpresaProductora> buscarPorNombre(String nomEmpresa) {
-        List<EmpresaProductora> lista = new ArrayList<>();
-        String regexPattern = "^.*" + nomEmpresa + ".*$";
-        regexPattern = regexPattern.toLowerCase();
-
-        MongoCursor<EmpresaProductora> cursor = this.getCollection().find(regex("nomEmpresa",regexPattern)).iterator();
-
+    public List<EmpresaTransporte> obtenerTodos() {
+        List<EmpresaTransporte> lista = new ArrayList<>();
+        MongoCursor<EmpresaTransporte> cursor = this.getCollection().find().iterator();
         try {
             while (cursor.hasNext()) {
-                EmpresaProductora epa = cursor.next();
-                lista.add(epa);
-            }
-        } finally {
-            cursor.close();
-        }
-        return lista;
-
-    }
-
-    public List<EmpresaProductora> obtenerEmpresas() {
-        List<EmpresaProductora> lista = new ArrayList<>();
-        MongoCursor<EmpresaProductora> cursor = this.getCollection().find().iterator();
-        try {
-            while (cursor.hasNext()) {
-                EmpresaProductora emp = cursor.next();
+                EmpresaTransporte emp = cursor.next();
                 lista.add(emp);
             }
         } finally {
@@ -139,4 +106,22 @@ public class EmpresaProductoraDAO {
         return lista;
     }
 
+    public List<EmpresaTransporte> buscarPorNombre(String text) {
+        List<EmpresaTransporte> lista = new ArrayList<>();
+        String regexPattern = "^.*" + text + ".*$";
+        regexPattern = regexPattern.toLowerCase();
+
+        MongoCursor<EmpresaTransporte> cursor = this.getCollection().find(regex("nomEmpresa", regexPattern)).iterator();
+
+        try {
+            while (cursor.hasNext()) {
+                EmpresaTransporte epa = cursor.next();
+                lista.add(epa);
+            }
+        } finally {
+            cursor.close();
+        }
+        return lista;
+
+    }
 }
